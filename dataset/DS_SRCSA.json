@@ -10,7 +10,6 @@
 		"typeProperties": {
 			"location": {
 				"type": "AzureBlobStorageLocation",
-				"fileName": "Sales_File_2014_2019_USA_UK_IND.csv",
 				"container": "srcsa"
 			},
 			"columnDelimiter": ",",
