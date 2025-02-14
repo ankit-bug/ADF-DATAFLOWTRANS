@@ -1,0 +1,87 @@
+{
+	"name": "df_dataflow12",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "DS_SRCSA",
+						"type": "DatasetReference"
+					},
+					"name": "loaddataset"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "DS_Destsa",
+						"type": "DatasetReference"
+					},
+					"name": "USAUK"
+				},
+				{
+					"dataset": {
+						"referenceName": "DS_Destsa",
+						"type": "DatasetReference"
+					},
+					"name": "USAIND"
+				},
+				{
+					"dataset": {
+						"referenceName": "DS_Destsa",
+						"type": "DatasetReference"
+					},
+					"name": "DEFAULT"
+				}
+			],
+			"transformations": [
+				{
+					"name": "ANKIT"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          Country as string,",
+				"          Year as string,",
+				"          Product_Type as string,",
+				"          Sales as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> loaddataset",
+				"loaddataset split(Country == 'USA'  || Country == 'UK',",
+				"     Country == 'USA' || Country == 'IND',",
+				"     Country == 'Default',",
+				"     disjoint: true) ~> ANKIT@(USAUK, USAIND, DEFAULT, ANKIT)",
+				"ANKIT@USAUK sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     partitionFileNames:['USAUK.CSV'],",
+				"     umask: 0022,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     partitionBy('hash', 1)) ~> USAUK",
+				"ANKIT@USAIND sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     partitionFileNames:['USAIND.CSV'],",
+				"     umask: 0022,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     partitionBy('hash', 1)) ~> USAIND",
+				"ANKIT@DEFAULT sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     partitionFileNames:['DEFAULT.CSV'],",
+				"     umask: 0022,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     partitionBy('hash', 1)) ~> DEFAULT"
+			]
+		}
+	}
+}
