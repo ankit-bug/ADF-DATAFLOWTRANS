@@ -1,0 +1,40 @@
+{
+	"name": "LS_USASALES",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_blbsa",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"fileName": "Aus_IND_Sales.csv",
+				"container": "srcsa"
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"firstRowAsHeader": true,
+			"quoteChar": "\""
+		},
+		"schema": [
+			{
+				"name": "Order_id",
+				"type": "String"
+			},
+			{
+				"name": "Country",
+				"type": "String"
+			},
+			{
+				"name": "Year",
+				"type": "String"
+			},
+			{
+				"name": "Sales",
+				"type": "String"
+			}
+		]
+	}
+}
