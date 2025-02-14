@@ -44,14 +44,13 @@
 						"userProperties": [],
 						"typeProperties": {
 							"dataflow": {
-								"referenceName": "df_dataflow12",
+								"referenceName": "df_dataflow17",
 								"type": "DataFlowReference",
 								"parameters": {},
 								"datasetParameters": {
-									"loaddataset": {},
-									"USAUK": {},
-									"USAIND": {},
-									"DEFAULT": {}
+									"source1": {},
+									"source2": {},
+									"sink1": {}
 								}
 							},
 							"staging": {},
@@ -66,11 +65,10 @@
 				"policy": {
 					"elapsedTimeMetric": {}
 				},
-				"annotations": [],
-				"lastPublishTime": "2025-02-14T16:16:22Z"
+				"annotations": []
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/dataflows/df_dataflow12')]"
+				"[concat(variables('factoryId'), '/dataflows/df_dataflow17')]"
 			]
 		},
 		{
@@ -114,7 +112,6 @@
 				"typeProperties": {
 					"location": {
 						"type": "AzureBlobStorageLocation",
-						"fileName": "Sales_File_2014_2019_USA_UK_IND.csv",
 						"container": "srcsa"
 					},
 					"columnDelimiter": ",",
@@ -133,6 +130,100 @@
 					},
 					{
 						"name": "Product_Type",
+						"type": "String"
+					},
+					{
+						"name": "Sales",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/LS_blbsa')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_blobconditional')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_blbsa",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": "Conditional Split.csv",
+						"container": "srcsa"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "Row",
+						"type": "String"
+					},
+					{
+						"name": "Country",
+						"type": "String"
+					},
+					{
+						"name": "Year",
+						"type": "String"
+					},
+					{
+						"name": "Product_Type",
+						"type": "String"
+					},
+					{
+						"name": "Sales",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/LS_blbsa')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/LS_USASALES')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_blbsa",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": "Aus_IND_Sales.csv",
+						"container": "srcsa"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "Order_id",
+						"type": "String"
+					},
+					{
+						"name": "Country",
+						"type": "String"
+					},
+					{
+						"name": "Year",
 						"type": "String"
 					},
 					{
@@ -176,7 +267,7 @@
 			"dependsOn": []
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/df_dataflow12')]",
+			"name": "[concat(parameters('factoryName'), '/df_dataflow17')]",
 			"type": "Microsoft.DataFactory/factories/dataflows",
 			"apiVersion": "2018-06-01",
 			"properties": {
@@ -185,10 +276,17 @@
 					"sources": [
 						{
 							"dataset": {
-								"referenceName": "DS_SRCSA",
+								"referenceName": "LS_USASALES",
 								"type": "DatasetReference"
 							},
-							"name": "loaddataset"
+							"name": "source1"
+						},
+						{
+							"dataset": {
+								"referenceName": "DS_blobconditional",
+								"type": "DatasetReference"
+							},
+							"name": "source2"
 						}
 					],
 					"sinks": [
@@ -197,30 +295,26 @@
 								"referenceName": "DS_Destsa",
 								"type": "DatasetReference"
 							},
-							"name": "USAUK"
-						},
-						{
-							"dataset": {
-								"referenceName": "DS_Destsa",
-								"type": "DatasetReference"
-							},
-							"name": "USAIND"
-						},
-						{
-							"dataset": {
-								"referenceName": "DS_Destsa",
-								"type": "DatasetReference"
-							},
-							"name": "DEFAULT"
+							"name": "sink1"
 						}
 					],
 					"transformations": [
 						{
-							"name": "ANKIT"
+							"name": "exists1"
 						}
 					],
 					"scriptLines": [
 						"source(output(",
+						"          Order_id as string,",
+						"          Country as string,",
+						"          Year as string,",
+						"          Sales as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> source1",
+						"source(output(",
+						"          Row as string,",
 						"          Country as string,",
 						"          Year as string,",
 						"          Product_Type as string,",
@@ -228,43 +322,25 @@
 						"     ),",
 						"     allowSchemaDrift: true,",
 						"     validateSchema: false,",
-						"     ignoreNoFilesFound: false) ~> loaddataset",
-						"loaddataset split(Country == 'USA'  || Country == 'UK',",
-						"     Country == 'USA' || Country == 'IND',",
-						"     Country == 'Default',",
-						"     disjoint: true) ~> ANKIT@(USAUK, USAIND, DEFAULT, ANKIT)",
-						"ANKIT@USAUK sink(allowSchemaDrift: true,",
+						"     ignoreNoFilesFound: false) ~> source2",
+						"source1, source2 exists(source1@Year == source2@Year,",
+						"     negate:false,",
+						"     broadcast: 'auto')~> exists1",
+						"exists1 sink(allowSchemaDrift: true,",
 						"     validateSchema: false,",
-						"     partitionFileNames:['USAUK.CSV'],",
+						"     partitionFileNames:['MAtchingrecord.csv'],",
 						"     umask: 0022,",
 						"     preCommands: [],",
 						"     postCommands: [],",
 						"     skipDuplicateMapInputs: true,",
 						"     skipDuplicateMapOutputs: true,",
-						"     partitionBy('hash', 1)) ~> USAUK",
-						"ANKIT@USAIND sink(allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     partitionFileNames:['USAIND.CSV'],",
-						"     umask: 0022,",
-						"     preCommands: [],",
-						"     postCommands: [],",
-						"     skipDuplicateMapInputs: true,",
-						"     skipDuplicateMapOutputs: true,",
-						"     partitionBy('hash', 1)) ~> USAIND",
-						"ANKIT@DEFAULT sink(allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     partitionFileNames:['DEFAULT.CSV'],",
-						"     umask: 0022,",
-						"     preCommands: [],",
-						"     postCommands: [],",
-						"     skipDuplicateMapInputs: true,",
-						"     skipDuplicateMapOutputs: true,",
-						"     partitionBy('hash', 1)) ~> DEFAULT"
+						"     partitionBy('hash', 1)) ~> sink1"
 					]
 				}
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/DS_SRCSA')]",
+				"[concat(variables('factoryId'), '/datasets/LS_USASALES')]",
+				"[concat(variables('factoryId'), '/datasets/DS_blobconditional')]",
 				"[concat(variables('factoryId'), '/datasets/DS_Destsa')]"
 			]
 		}
